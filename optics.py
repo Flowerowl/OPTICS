@@ -28,7 +28,7 @@ class Optics:
         self.max_radius = max_radius                # maximum radius to consider
         self.min_cluster_size = min_cluster_size    # minimum points in cluster
 
-    def _setup(self):
+    def setup(self):
         """get ready for a clustering run
         """
         for p in self.points:
@@ -37,29 +37,29 @@ class Optics:
         self.unprocessed = [p for p in self.points]
         self.ordered = []
 
-    def _core_distance(self, point, neighbors):
+    def core_distance(self, point, neighbors):
         """distance from a point to its nth neighbor (n = min_cluser_size)
         """
         if point.cd is not None: return point.cd
         if len(neighbors) >= self.min_cluster_size - 1:
-            sorted_neighbors = sorted([n.distance(point) for n in neighbors])
-            point.cd = sorted_neighbors[self.min_cluster_size - 2]
+            sortedneighbors = sorted([n.distance(point) for n in neighbors])
+            point.cd = sortedneighbors[self.min_cluster_size - 2]
             return point.cd
 
-    def _neighbors(self, point):
+    def neighbors(self, point):
         """neighbors for a point within max_radius
         """
         return [p for p in self.points if p is not point and
             p.distance(point) <= self.max_radius]
 
-    def _processed(self, point):
+    def processed(self, point):
         """mark a point as processed
         """
         point.processed = True
         self.unprocessed.remove(point)
         self.ordered.append(point)
 
-    def _update(self, neighbors, point, seeds):
+    def update(self, neighbors, point, seeds):
         """update seeds if a smaller reachability distance is found
         """
         for n in [n for n in neighbors if not n.processed]:
@@ -74,20 +74,20 @@ class Optics:
                 n.rd = new_rd
 
     def run(self):
-        self._setup()
+        self.setup()
         # for each unprocessed point (p)...
 
         while self.unprocessed:
             point = self.unprocessed[0]
             # mark p as processed
             # find p's neighbors
-            self._processed(point)
-            point_neighbors = self._neighbors(point)
+            self.processed(point)
+            pointneighbors = self.neighbors(point)
             # if p has a core_distance, i.e has min_cluster_size - 1 neighbors
-            if self._core_distance(point, point_neighbors) is not None:
+            if self.core_distance(point, pointneighbors) is not None:
                 # update reachability_distance for each unprocessed neighbor
                 seeds = []
-                self._update(point_neighbors, point, seeds)
+                self.update(pointneighbors, point, seeds)
                 # as long as we have unprocessed neighbors...
                 while(seeds):
                     # find the neighbor n with smallest reachability distance
@@ -95,12 +95,12 @@ class Optics:
                     n = seeds.pop(0)
                     # mark n as processed
                     # find n's neighbors
-                    self._processed(n)
-                    n_neighbors = self._neighbors(n)
+                    self.processed(n)
+                    nneighbors = self.neighbors(n)
                     # if p has a core_distance...
-                    if self._core_distance(n, n_neighbors) is not None:
+                    if self.core_distance(n, nneighbors) is not None:
                         # update reachability_distance for each of n's neighbors
-                        self._update(n_neighbors, n, seeds)
+                        self.update(nneighbors, n, seeds)
 
         # when all points have been processed
         # return the ordered list
